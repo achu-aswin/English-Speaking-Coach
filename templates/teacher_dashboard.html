@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Portal - Gayathri Speak Smart</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1300px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: white; padding: 25px 30px;
+            border-radius: 15px; margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { color: #667eea; font-size: 26px; font-weight: 700; }
+        .header p  { color: #666; margin-top: 4px; font-size: 14px; }
+        .logout-btn {
+            padding: 10px 20px; background: #ff6b6b; color: white;
+            border: none; border-radius: 8px; font-size: 15px;
+            font-weight: 600; cursor: pointer; transition: all 0.3s; flex-shrink: 0;
+        }
+        .logout-btn:hover { background: #ee5a52; transform: translateY(-2px); }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px; margin-bottom: 25px;
+        }
+        .stat-card {
+            background: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1); text-align: center;
+        }
+        .stat-card h3 { color: #666; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .stat-value   { font-size: 30px; font-weight: 700; color: #667eea; }
+
+        /* Students section */
+        .students-section {
+            background: white; padding: 25px; border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 18px;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .section-header h2 { color: #2d3436; font-size: 20px; }
+
+        .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+        .search-box, .filter-select {
+            padding: 9px 13px; border: 2px solid #e0e0e0;
+            border-radius: 8px; font-size: 13px; font-family: inherit;
+            background: white; color: #2d3436; transition: border-color .2s;
+        }
+        .search-box    { width: 240px; }
+        .filter-select { min-width: 110px; cursor: pointer; }
+        .search-box:focus, .filter-select:focus { outline: none; border-color: #667eea; }
+
+        .table-wrapper { overflow-x: auto; }
+
+        .students-table {
+            width: 100%; border-collapse: collapse; min-width: 900px;
+        }
+        .students-table thead { background: #f8f9fa; }
+        .students-table thead th {
+            padding: 11px 12px; text-align: left;
+            font-weight: 600; color: #2d3436;
+            font-size: 13px; white-space: nowrap;
+        }
+        .students-table tbody tr { border-bottom: 1px solid #eee; }
+        .students-table tbody tr:hover { background: #f8f9fa; }
+        .students-table tbody td { padding: 13px 12px; color: #2d3436; font-size: 13px; }
+
+        .user-id-cell {
+            font-family: monospace; font-size: 12px;
+            color: #553c9a; font-weight: 700; letter-spacing: 1px;
+        }
+
+        .view-btn {
+            padding: 5px 14px; background: #667eea; color: white;
+            border: none; border-radius: 6px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: all .3s;
+        }
+        .view-btn:hover { background: #5568d3; transform: translateY(-1px); }
+
+        .badge {
+            display: inline-block; padding: 3px 9px;
+            border-radius: 12px; font-size: 11px;
+            font-weight: 700; white-space: nowrap;
+        }
+        .xp-badge    { background: #fff3cd; color: #856404; }
+        .level-badge { background: #d1ecf1; color: #0c5460; }
+        .class-badge { background: #e9d8fd; color: #553c9a; }
+        .div-badge   { background: #fce8e8; color: #9b2626; }
+        .uid-badge   { background: #ede9fe; color: #553c9a; font-family: monospace; letter-spacing: 1px; }
+
+        /* Copy button */
+        .copy-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 13px; padding: 2px 5px; border-radius: 4px;
+            color: #888; transition: color .2s;
+            vertical-align: middle; margin-left: 3px;
+        }
+        .copy-btn:hover { color: #667eea; }
+        .copy-btn.copied { color: #00b894; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.7); z-index: 1000;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px;
+            max-width: 820px; width: 100%; max-height: 88vh;
+            overflow-y: auto; position: relative;
+        }
+        .close-modal {
+            position: absolute; top: 14px; right: 18px;
+            font-size: 26px; cursor: pointer; color: #999;
+        }
+        .close-modal:hover { color: #ff6b6b; }
+
+        .student-header {
+            text-align: center; padding-bottom: 18px;
+            border-bottom: 2px solid #eee; margin-bottom: 22px;
+        }
+        .student-avatar { font-size: 56px; margin-bottom: 12px; }
+        .student-header h2 {
+            color: #2d3436; font-size: 24px;
+            margin-bottom: 8px; text-transform: capitalize;
+        }
+        .badges { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 13px; margin-bottom: 22px;
+        }
+        .progress-card {
+            background: #667eea; color: white;
+            padding: 18px; border-radius: 10px; text-align: center;
+        }
+        .progress-card h3 { font-size: 12px; margin-bottom: 7px; opacity: .9; }
+        .progress-card .value { font-size: 26px; font-weight: 700; }
+
+        .info-row {
+            display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px;
+        }
+        .info-chip {
+            display: flex; align-items: center; gap: 7px;
+            background: #f0f2ff; border: 1.5px solid #c5caf5;
+            border-radius: 10px; padding: 10px 16px;
+            font-size: 13px; font-weight: 700; color: #3d4aba;
+        }
+        .info-chip .label {
+            font-weight: 600; color: #888;
+            font-size: 11px; display:block; margin-bottom:2px;
+        }
+        .info-chip .val { font-size: 15px; font-weight: 800; color: #3d4aba; }
+
+        /* User ID chip in modal — wider, monospace */
+        .info-chip.uid-chip {
+            background: #ede9fe; border-color: #a78bfa;
+            flex-direction: column; align-items: flex-start;
+        }
+        .info-chip.uid-chip .val {
+            font-family: monospace; letter-spacing: 3px;
+            font-size: 18px; color: #553c9a;
+        }
+
+        .activity-log { background: #f8f9fa; padding: 18px; border-radius: 10px; }
+        .activity-log h3 { color: #2d3436; margin-bottom: 13px; font-size: 17px; }
+        .activity-item {
+            background: white; padding: 11px; border-radius: 8px;
+            margin-bottom: 9px; border-left: 3px solid #667eea;
+        }
+        .activity-date { font-size: 11px; color: #999; margin-bottom: 4px; }
+        .activity-desc { color: #2d3436; font-size: 13px; }
+
+        .loading { text-align:center; padding:30px; color:#999; }
+
+        @media (max-width: 768px) {
+            .header { flex-direction:column; text-align:center; gap:12px; }
+            .search-box { width:100%; }
+            .modal-content { padding:18px; }
+            .filter-row { flex-direction:column; }
+            .filter-select, .search-box { width:100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <div>
+            <h1>👩‍🏫 Instructor Portal</h1>
+            <p id="teacherName">Welcome, Instructor</p>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><h3>Total Students</h3><div class="stat-value" id="totalStudents">0</div></div>
+        <div class="stat-card"><h3>Average XP</h3><div class="stat-value" id="avgXP">0</div></div>
+        <div class="stat-card"><h3>Total Stars</h3><div class="stat-value" id="totalStars">0</div></div>
+        <div class="stat-card"><h3>Avg Accuracy</h3><div class="stat-value" id="avgAccuracy">0%</div></div>
+    </div>
+
+    <div class="students-section">
+        <div class="section-header">
+            <h2>📊 Students Performance</h2>
+            <div class="filter-row">
+                <input type="text" class="search-box" id="searchStudent"
+                       placeholder="Search name, roll no or User ID…" oninput="applyFilters()">
+                <select class="filter-select" id="filterClass" onchange="applyFilters()">
+                    <option value="">All Classes</option>
+                    <option value="1">Class 1</option><option value="2">Class 2</option>
+                    <option value="3">Class 3</option><option value="4">Class 4</option>
+                    <option value="5">Class 5</option><option value="6">Class 6</option>
+                    <option value="7">Class 7</option><option value="8">Class 8</option>
+                    <option value="9">Class 9</option><option value="10">Class 10</option>
+                </select>
+                <select class="filter-select" id="filterDivision" onchange="applyFilters()">
+                    <option value="">All Divisions</option>
+                    <option value="A">A</option><option value="B">B</option>
+                    <option value="C">C</option><option value="D">D</option>
+                    <option value="E">E</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>Roll No</th>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Division</th>
+                        <th>Level</th>
+                        <th>XP</th>
+                        <th>Stars</th>
+                        <th>Accuracy</th>
+                        <th>Last Active</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTableBody">
+                    <tr><td colspan="11" class="loading">Loading students…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal" id="studentModal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div id="studentDetailsContent"></div>
+    </div>
+</div>
+
+<script>
+{% raw %}
+let allStudents = [];
+
+window.onload = function() {
+    loadTeacherData();
+    loadStudentsData();
+};
+
+async function loadTeacherData() {
+    try {
+        const res  = await fetch('/get_teacher_info');
+        const data = await res.json();
+        if (data.success)
+            document.getElementById('teacherName').textContent =
+                'Welcome, ' + capitalizeName(data.teacher.name);
+    } catch(e) { console.error(e); }
+}
+
+function capitalizeName(name) {
+    if (!name) return '';
+    return name.split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+}
+
+async function loadStudentsData() {
+    try {
+        const res  = await fetch('/get_all_students');
+        const data = await res.json();
+        if (data.success) {
+            allStudents = data.students;
+            updateStatistics();
+            displayStudents(allStudents);
+        }
+    } catch(e) {
+        console.error(e);
+        document.getElementById('studentsTableBody').innerHTML =
+            '<tr><td colspan="11" style="text-align:center;color:#ff6b6b;">Error loading data. Please refresh.</td></tr>';
+    }
+}
+
+function updateStatistics() {
+    document.getElementById('totalStudents').textContent = allStudents.length;
+    if (allStudents.length > 0) {
+        const totalXP = allStudents.reduce((s, x) => s + (x.xp || 0), 0);
+        document.getElementById('avgXP').textContent = Math.round(totalXP / allStudents.length);
+
+        const totalStars = allStudents.reduce((s, x) => s + (x.totalStars || 0), 0);
+        document.getElementById('totalStars').textContent = totalStars;
+
+        const totalAcc = allStudents.reduce((s, x) => s + (x.averageAccuracy || 0), 0);
+        document.getElementById('avgAccuracy').textContent =
+            Math.round(totalAcc / allStudents.length) + '%';
+    }
+}
+
+function displayStudents(students) {
+    const tbody = document.getElementById('studentsTableBody');
+    if (students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#999;">No students found.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = students.map(s => {
+        const level      = calculateLevel(s.xp || 0);
+        const lastActive = s.lastActive ? new Date(s.lastActive).toLocaleDateString() : 'Never';
+        const cls        = s.className || s.class || '—';
+        const div        = s.division  || '—';
+        const uid        = s.userIdCode || '—';
+
+        return `
+            <tr>
+                <td><strong>${s.rollNo}</strong></td>
+                <td class="user-id-cell">
+                    ${uid !== '—' ? `<span title="${uid}">${uid}</span>
+                    <button class="copy-btn" title="Copy User ID" onclick="copyUID('${uid}', this)">📋</button>` : '—'}
+                </td>
+                <td>${capitalizeName(s.name)}</td>
+                <td><span class="badge class-badge">Class ${cls}</span></td>
+                <td><span class="badge div-badge">Div ${div}</span></td>
+                <td><span class="badge level-badge">Lvl ${level}</span></td>
+                <td><span class="badge xp-badge">${s.xp || 0} XP</span></td>
+                <td>⭐ ${s.totalStars || 0}</td>
+                <td>${s.averageAccuracy || 0}%</td>
+                <td>${lastActive}</td>
+                <td>
+                    <button class="view-btn"
+                        onclick="viewStudentDetails('${s.rollNo}','${cls}','${div}')">
+                        View
+                    </button>
+                </td>
+            </tr>`;
+    }).join('');
+}
+
+function calculateLevel(xp)  { return Math.floor(xp / 100) + 1; }
+function xpToNextLevel(xp)   { return (calculateLevel(xp) * 100) - xp; }
+
+function applyFilters() {
+    const term     = document.getElementById('searchStudent').value.toLowerCase();
+    const selClass = document.getElementById('filterClass').value;
+    const selDiv   = document.getElementById('filterDivision').value;
+
+    const filtered = allStudents.filter(s => {
+        const cls = String(s.className || s.class || '');
+        const div = String(s.division  || '');
+        const uid = String(s.userIdCode || '').toLowerCase();
+
+        const matchSearch = !term ||
+            s.name.toLowerCase().includes(term) ||
+            String(s.rollNo).toLowerCase().includes(term) ||
+            uid.includes(term);                              // ← search by User ID too
+
+        const matchClass = !selClass || cls === selClass;
+        const matchDiv   = !selDiv   || div.toUpperCase() === selDiv.toUpperCase();
+
+        return matchSearch && matchClass && matchDiv;
+    });
+
+    displayStudents(filtered);
+}
+
+async function viewStudentDetails(rollNo, cls, div) {
+    try {
+        const res  = await fetch(`/get_student_details/${rollNo}`);
+        const data = await res.json();
+
+        if (data.success) {
+            const s         = data.student;
+            const level     = calculateLevel(s.xp || 0);
+            const nextLvlXP = xpToNextLevel(s.xp || 0);
+            const className = s.className || s.class || cls || '—';
+            const division  = s.division  || div  || '—';
+            const uid       = s.userIdCode || '—';
+
+            document.getElementById('studentDetailsContent').innerHTML = `
+                <div class="student-header">
+                    <div class="student-avatar">👨‍🎓</div>
+                    <h2>${capitalizeName(s.name)}</h2>
+                    <div class="badges">
+                        <span class="badge level-badge">Level ${level}</span>
+                        <span class="badge xp-badge">${s.xp || 0} XP</span>
+                        <span class="badge" style="background:#e0e0e0;color:#2d3436;">Roll: ${s.rollNo}</span>
+                        ${uid !== '—' ? `<span class="badge uid-badge">🪪 ${uid}</span>` : ''}
+                    </div>
+                </div>
+
+                <!-- User ID prominent chip -->
+                ${uid !== '—' ? `
+                <div class="info-row" style="margin-bottom:14px;">
+                    <div class="info-chip uid-chip">
+                        <span class="label">🪪 Student User ID (used for login)</span>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span class="val" id="modalUID">${uid}</span>
+                            <button class="copy-btn" title="Copy User ID"
+                                onclick="copyUID('${uid}', this)" style="font-size:16px;">📋</button>
+                        </div>
+                    </div>
+                </div>` : ''}
+
+                <div class="info-row">
+                    <div class="info-chip">
+                        <div>
+                            <span class="label">Class</span>
+                            <span class="val">Class ${className}</span>
+                        </div>
+                    </div>
+                    <div class="info-chip">
+                        <div>
+                            <span class="label">Division</span>
+                            <span class="val">Division ${division}</span>
+                        </div>
+                    </div>
+                    <div class="info-chip">
+                        <div>
+                            <span class="label">Roll Number</span>
+                            <span class="val">${s.rollNo}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-grid">
+                    <div class="progress-card"><h3>Total Stars</h3><div class="value">⭐ ${s.totalStars || 0}</div></div>
+                    <div class="progress-card"><h3>Accuracy</h3><div class="value">${s.averageAccuracy || 0}%</div></div>
+                    <div class="progress-card"><h3>Sessions</h3><div class="value">${s.totalSessions || 0}</div></div>
+                    <div class="progress-card"><h3>Next Level</h3><div class="value">${nextLvlXP} XP</div></div>
+                </div>
+
+                <div class="activity-log">
+                    <h3>📋 Recent Activity</h3>
+                    ${displayActivityLog(s.activityLog || [])}
+                </div>
+            `;
+
+            document.getElementById('studentModal').classList.add('active');
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Error loading details. Please try again.');
+    }
+}
+
+function displayActivityLog(activities) {
+    if (!activities || activities.length === 0)
+        return '<p style="color:#999;text-align:center;padding:16px;">No recent activity</p>';
+
+    return activities.slice(0, 10).map(a => `
+        <div class="activity-item">
+            <div class="activity-date">${new Date(a.date).toLocaleString()}</div>
+            <div class="activity-desc">
+                ${a.mode}: ${a.score}% accuracy • ${a.xpEarned} XP • ${a.starsEarned} ⭐
+            </div>
+        </div>
+    `).join('');
+}
+
+function copyUID(uid, btn) {
+    navigator.clipboard.writeText(uid).then(() => {
+        btn.textContent = '✅';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1800);
+    }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = uid; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = '✅'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1800);
+    });
+}
+
+function closeModal() {
+    document.getElementById('studentModal').classList.remove('active');
+}
+
+function logout() {
+    if (confirm('Are you sure you want to logout?'))
+        window.location.href = '/logout';
+}
+
+window.onclick = function(e) {
+    const modal = document.getElementById('studentModal');
+    if (e.target === modal) closeModal();
+};
+{% endraw %}
+</script>
+</body>
+</html>

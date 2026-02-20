@@ -1,0 +1,6 @@
+flask
+gtts
+python-dotenv
+groq
+gunicorn
+Werkzeug==3.0.1
